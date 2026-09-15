@@ -161,7 +161,7 @@ def build_briefing(
 
     days_until_due: Optional[int] = None
     notes: List[str] = []
-    current_week: int = week or 1
+    current_week: int = week if week is not None else 1
 
     if due_date is not None:
         today = today or date.today()

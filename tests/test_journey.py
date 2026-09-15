@@ -177,6 +177,11 @@ class BriefingTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_briefing(week=10, due_date=date(2026, 10, 8))
 
+    def test_briefing_rejects_out_of_range_week(self):
+        for bad in (0, LAST_WEEK + 1):
+            with self.assertRaises(ValueError):
+                build_briefing(week=bad)
+
 
 if __name__ == "__main__":
     unittest.main()

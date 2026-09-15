@@ -101,8 +101,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_stage_arguments(week_parser)
 
     timeline_parser = subparsers.add_parser("timeline", help="show the stage-based pregnancy timeline")
-    timeline_parser.add_argument("--from", dest="start", type=int, default=1, help="first week to show")
-    timeline_parser.add_argument("--to", dest="end", type=int, default=LAST_WEEK, help="last week to show")
+    timeline_parser.add_argument("--from", dest="start", type=_parse_week, default=1, help="first week to show")
+    timeline_parser.add_argument("--to", dest="end", type=_parse_week, default=LAST_WEEK, help="last week to show")
 
     guidance_parser = subparsers.add_parser("guidance", help="show do's and don'ts for a week")
     _add_stage_arguments(guidance_parser)
@@ -132,8 +132,6 @@ def _run(args: argparse.Namespace) -> List[str]:
         return _format_briefing(briefing)
 
     if args.command == "timeline":
-        if not 1 <= args.start <= LAST_WEEK or not 1 <= args.end <= LAST_WEEK:
-            raise SystemExit(f"error: weeks must be between 1 and {LAST_WEEK}")
         if args.start > args.end:
             raise SystemExit("error: --from must not be greater than --to")
         lines = ["Pregnancy timeline", "=================="]
