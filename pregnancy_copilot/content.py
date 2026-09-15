@@ -145,7 +145,9 @@ _WEEK_ROWS: Tuple[Tuple[int, str, str, str], ...] = (
 )
 
 
-def _trimester_for(week: int) -> int:
+def trimester_of(week: int) -> int:
+    """Return the trimester containing ``week`` without validating the input."""
+
     if week <= FIRST_TRIMESTER_LAST_WEEK:
         return 1
     if week <= SECOND_TRIMESTER_LAST_WEEK:
@@ -156,7 +158,7 @@ def _trimester_for(week: int) -> int:
 WEEK_MILESTONES: Dict[int, WeekMilestone] = {
     row[0]: WeekMilestone(
         week=row[0],
-        trimester=_trimester_for(row[0]),
+        trimester=trimester_of(row[0]),
         baby_development=row[1],
         mother_changes=row[2],
         focus=row[3],

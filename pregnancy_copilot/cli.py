@@ -45,7 +45,7 @@ def _format_briefing(briefing: Briefing) -> List[str]:
     milestone = briefing.milestone
     lines = [milestone.title, "=" * len(milestone.title), ""]
     if briefing.due_date is not None:
-        days = briefing.days_until_due or 0
+        days = briefing.days_until_due if briefing.days_until_due is not None else 0
         countdown = f"{days} days to go" if days >= 0 else f"{-days} days past the due date"
         lines.append(f"Due date: {briefing.due_date.isoformat()} ({countdown})")
         lines.append("")
@@ -67,17 +67,25 @@ def _format_briefing(briefing: Briefing) -> List[str]:
     return lines
 
 
+def _parse_week(value: str) -> int:
+    try:
+        week = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid week '{value}', expected an integer") from exc
+    if not 1 <= week <= LAST_WEEK:
+        raise argparse.ArgumentTypeError(f"week must be between 1 and {LAST_WEEK}, got {week}")
+    return week
+
+
 def _resolve_week(args: argparse.Namespace) -> int:
     if args.week is not None:
-        if not 1 <= args.week <= LAST_WEEK:
-            raise SystemExit(f"error: --week must be between 1 and {LAST_WEEK}")
         return args.week
     return week_from_due_date(args.due_date)
 
 
 def _add_stage_arguments(parser: argparse.ArgumentParser) -> None:
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--week", type=int, help=f"pregnancy week (1-{LAST_WEEK})")
+    group.add_argument("--week", type=_parse_week, help=f"pregnancy week (1-{LAST_WEEK})")
     group.add_argument("--due-date", type=_parse_date, help="estimated due date (YYYY-MM-DD)")
 
 
@@ -117,11 +125,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> List[str]:
     if args.command == "week":
-        week = _resolve_week(args)
         if args.due_date is not None:
             briefing = build_briefing(due_date=args.due_date)
         else:
-            briefing = build_briefing(week=week)
+            briefing = build_briefing(week=_resolve_week(args))
         return _format_briefing(briefing)
 
     if args.command == "timeline":

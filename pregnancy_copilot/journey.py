@@ -13,16 +13,15 @@ from .content import (
     APPOINTMENTS,
     DISCLAIMER,
     EMERGENCY_SIGNS,
-    FIRST_TRIMESTER_LAST_WEEK,
     GENERAL_GUIDANCE,
     GESTATION_DAYS,
     LAST_WEEK,
     NEWBORN_GUIDANCE,
     NEWBORN_STAGES,
     PARTNER_TIPS,
-    SECOND_TRIMESTER_LAST_WEEK,
     TRIMESTER_GUIDANCE,
     WEEK_MILESTONES,
+    trimester_of,
 )
 from .models import Appointment, Briefing, Guidance, NewbornStage, WeekMilestone
 
@@ -48,11 +47,7 @@ def trimester_for_week(week: int) -> int:
     """Return the trimester (1, 2 or 3) that contains ``week``."""
 
     _validate_week(week)
-    if week <= FIRST_TRIMESTER_LAST_WEEK:
-        return 1
-    if week <= SECOND_TRIMESTER_LAST_WEEK:
-        return 2
-    return 3
+    return trimester_of(week)
 
 
 def _validate_week(week: int) -> None:
@@ -172,10 +167,11 @@ def build_briefing(
         today = today or date.today()
         days_until_due = (due_date - today).days
         raw_weeks, _ = gestational_age(due_date, today)
+        unclamped_week = raw_weeks + 1
         current_week = week_from_due_date(due_date, today)
-        if raw_weeks + 1 < 1:
+        if unclamped_week < 1:
             notes.append("The due date suggests the pregnancy has not started yet; showing week 1.")
-        elif raw_weeks + 1 > LAST_WEEK:
+        elif unclamped_week > LAST_WEEK:
             notes.append("You are past the due date; contact your provider about monitoring options.")
 
     milestone = milestone_for_week(current_week)
