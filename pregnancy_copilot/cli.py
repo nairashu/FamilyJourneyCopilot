@@ -77,6 +77,16 @@ def _parse_week(value: str) -> int:
     return week
 
 
+def _parse_days(value: str) -> int:
+    try:
+        days = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"invalid day '{value}', expected an integer") from exc
+    if days < 0:
+        raise argparse.ArgumentTypeError(f"day must not be negative, got {days}")
+    return days
+
+
 def _resolve_week(args: argparse.Namespace) -> int:
     if args.week is not None:
         return args.week
@@ -112,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     newborn_parser = subparsers.add_parser("newborn", help="show early newborn care guidance")
     newborn_age = newborn_parser.add_mutually_exclusive_group()
-    newborn_age.add_argument("--day", type=int, help="days since birth")
+    newborn_age.add_argument("--day", type=_parse_days, help="days since birth")
     newborn_age.add_argument("--birth-date", type=_parse_date, help="date of birth (YYYY-MM-DD)")
 
     due_parser = subparsers.add_parser("due-date", help="estimate the due date from the last period")
@@ -123,17 +133,17 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _run(args: argparse.Namespace) -> List[str]:
+def _run(args: argparse.Namespace, parser: argparse.ArgumentParser) -> List[str]:
     if args.command == "week":
         if args.due_date is not None:
             briefing = build_briefing(due_date=args.due_date)
         else:
-            briefing = build_briefing(week=_resolve_week(args))
+            briefing = build_briefing(week=args.week)
         return _format_briefing(briefing)
 
     if args.command == "timeline":
         if args.start > args.end:
-            raise SystemExit("error: --from must not be greater than --to")
+            parser.error("--from must not be greater than --to")
         lines = ["Pregnancy timeline", "=================="]
         current_trimester: Optional[int] = None
         for milestone in timeline(args.start, args.end):
@@ -156,13 +166,9 @@ def _run(args: argparse.Namespace) -> List[str]:
         if args.birth_date is not None:
             day = (date.today() - args.birth_date).days
             if day < 0:
-                raise SystemExit("error: --birth-date is in the future")
-        elif args.day is not None:
-            if args.day < 0:
-                raise SystemExit("error: --day must not be negative")
-            day = args.day
+                parser.error("--birth-date must not be in the future")
         else:
-            day = 0
+            day = args.day if args.day is not None else 0
         stage = newborn_stage_for_day(day)
         lines = [f"Newborn stage: {stage.name} (day {day})", ""]
         lines.append("What is happening:")
@@ -189,7 +195,7 @@ def _run(args: argparse.Namespace) -> List[str]:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    for line in _run(args):
+    for line in _run(args, parser):
         print(line)
     print()
     print(DISCLAIMER)
