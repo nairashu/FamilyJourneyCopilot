@@ -30,6 +30,12 @@ class CliTests(unittest.TestCase):
         self.assertIn("Week 31", out)
         self.assertIn("70 days to go", out)
 
+    def test_past_due_date_countdown(self):
+        due = date.today() - timedelta(days=3)
+        _, out = run("week", "--due-date", due.isoformat())
+        self.assertIn("3 days past the due date", out)
+        self.assertIn("Notes:", out)
+
     def test_timeline_range(self):
         code, out = run("timeline", "--from", "12", "--to", "15")
         self.assertEqual(code, 0)

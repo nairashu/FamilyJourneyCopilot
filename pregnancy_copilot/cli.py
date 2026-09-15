@@ -45,7 +45,9 @@ def _format_briefing(briefing: Briefing) -> List[str]:
     milestone = briefing.milestone
     lines = [milestone.title, "=" * len(milestone.title), ""]
     if briefing.due_date is not None:
-        lines.append(f"Due date: {briefing.due_date.isoformat()} ({briefing.days_until_due} days to go)")
+        days = briefing.days_until_due or 0
+        countdown = f"{days} days to go" if days >= 0 else f"{-days} days past the due date"
+        lines.append(f"Due date: {briefing.due_date.isoformat()} ({countdown})")
         lines.append("")
     lines.append(f"Baby: {milestone.baby_development}")
     lines.append(f"Mother: {milestone.mother_changes}")
@@ -101,8 +103,9 @@ def build_parser() -> argparse.ArgumentParser:
     _add_stage_arguments(partner_parser)
 
     newborn_parser = subparsers.add_parser("newborn", help="show early newborn care guidance")
-    newborn_parser.add_argument("--day", type=int, help="days since birth")
-    newborn_parser.add_argument("--birth-date", type=_parse_date, help="date of birth (YYYY-MM-DD)")
+    newborn_age = newborn_parser.add_mutually_exclusive_group()
+    newborn_age.add_argument("--day", type=int, help="days since birth")
+    newborn_age.add_argument("--birth-date", type=_parse_date, help="date of birth (YYYY-MM-DD)")
 
     due_parser = subparsers.add_parser("due-date", help="estimate the due date from the last period")
     due_parser.add_argument("--last-period", type=_parse_date, required=True,
@@ -114,10 +117,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _run(args: argparse.Namespace) -> List[str]:
     if args.command == "week":
-        if args.week is not None:
-            briefing = build_briefing(week=_resolve_week(args))
-        else:
+        week = _resolve_week(args)
+        if args.due_date is not None:
             briefing = build_briefing(due_date=args.due_date)
+        else:
+            briefing = build_briefing(week=week)
         return _format_briefing(briefing)
 
     if args.command == "timeline":
@@ -144,8 +148,6 @@ def _run(args: argparse.Namespace) -> List[str]:
         return [f"Partner support for week {week}", ""] + _bullets(partner_tips(week))
 
     if args.command == "newborn":
-        if args.day is not None and args.birth_date is not None:
-            raise SystemExit("error: use either --day or --birth-date, not both")
         if args.birth_date is not None:
             day = (date.today() - args.birth_date).days
             if day < 0:

@@ -33,12 +33,14 @@ class Guidance:
         """Combine two guidance sets, preserving order and dropping duplicates."""
 
         def _unique(*groups: Tuple[str, ...]) -> Tuple[str, ...]:
-            seen: list = []
+            ordered: list = []
+            seen = set()
             for group in groups:
                 for item in group:
                     if item not in seen:
-                        seen.append(item)
-            return tuple(seen)
+                        seen.add(item)
+                        ordered.append(item)
+            return tuple(ordered)
 
         return Guidance(
             dos=_unique(self.dos, other.dos),

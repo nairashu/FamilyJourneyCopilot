@@ -166,26 +166,26 @@ def build_briefing(
 
     days_until_due: Optional[int] = None
     notes: List[str] = []
+    current_week: int = week or 1
 
     if due_date is not None:
         today = today or date.today()
         days_until_due = (due_date - today).days
         raw_weeks, _ = gestational_age(due_date, today)
-        week = week_from_due_date(due_date, today)
+        current_week = week_from_due_date(due_date, today)
         if raw_weeks + 1 < 1:
             notes.append("The due date suggests the pregnancy has not started yet; showing week 1.")
         elif raw_weeks + 1 > LAST_WEEK:
             notes.append("You are past the due date; contact your provider about monitoring options.")
 
-    assert week is not None
-    milestone = milestone_for_week(week)
+    milestone = milestone_for_week(current_week)
     return Briefing(
-        week=week,
+        week=current_week,
         trimester=milestone.trimester,
         milestone=milestone,
-        guidance=guidance_for_week(week),
-        partner_tips=partner_tips(week),
-        upcoming_appointments=upcoming_appointments(week),
+        guidance=guidance_for_week(current_week),
+        partner_tips=partner_tips(current_week),
+        upcoming_appointments=upcoming_appointments(current_week),
         due_date=due_date,
         days_until_due=days_until_due,
         notes=tuple(notes),
