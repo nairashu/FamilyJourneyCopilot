@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from typing import Optional, Tuple
 
@@ -84,4 +84,4 @@ class Briefing:
     upcoming_appointments: Tuple[Appointment, ...] = ()
     due_date: Optional[date] = None
     days_until_due: Optional[int] = None
-    notes: Tuple[str, ...] = field(default_factory=tuple)
+    notes: Tuple[str, ...] = ()

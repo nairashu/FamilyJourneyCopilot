@@ -44,8 +44,8 @@ def _format_guidance(guidance: Guidance) -> List[str]:
 def _format_briefing(briefing: Briefing) -> List[str]:
     milestone = briefing.milestone
     lines = [milestone.title, "=" * len(milestone.title), ""]
-    if briefing.due_date is not None:
-        days = briefing.days_until_due if briefing.days_until_due is not None else 0
+    if briefing.due_date is not None and briefing.days_until_due is not None:
+        days = briefing.days_until_due
         countdown = f"{days} days to go" if days >= 0 else f"{-days} days past the due date"
         lines.append(f"Due date: {briefing.due_date.isoformat()} ({countdown})")
         lines.append("")
@@ -77,7 +77,7 @@ def _parse_week(value: str) -> int:
     return week
 
 
-def _parse_days(value: str) -> int:
+def _parse_day(value: str) -> int:
     try:
         days = int(value)
     except ValueError as exc:
@@ -122,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     newborn_parser = subparsers.add_parser("newborn", help="show early newborn care guidance")
     newborn_age = newborn_parser.add_mutually_exclusive_group()
-    newborn_age.add_argument("--day", type=_parse_days, help="days since birth")
+    newborn_age.add_argument("--day", type=_parse_day, help="days since birth")
     newborn_age.add_argument("--birth-date", type=_parse_date, help="date of birth (YYYY-MM-DD)")
 
     due_parser = subparsers.add_parser("due-date", help="estimate the due date from the last period")
